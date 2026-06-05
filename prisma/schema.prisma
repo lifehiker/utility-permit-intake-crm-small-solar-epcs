@@ -1,0 +1,216 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  password      String?
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts    Account[]
+  sessions    Session[]
+  memberships Membership[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Organization {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  logoUrl      String?
+  brandColor   String   @default("#f59e0b")
+  contactEmail String?
+  contactPhone String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  memberships  Membership[]
+  projects     Project[]
+  templates    ChecklistTemplate[]
+  subscription Subscription?
+}
+
+model Membership {
+  id             String   @id @default(cuid())
+  userId         String
+  organizationId String
+  role           String   @default("MEMBER")
+  createdAt      DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projects Project[]
+}
+
+model Project {
+  id             String   @id @default(cuid())
+  organizationId String
+  customerId     String
+  title          String
+  projectType    String   @default("RESIDENTIAL")
+  stage          String   @default("NEW_INTAKE")
+  assignedToId   String?
+  notes          String?
+  lastReminderAt DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer       Customer               @relation(fields: [customerId], references: [id])
+  checklistItems ProjectChecklistItem[]
+  documents      Document[]
+  activityLogs   ActivityLog[]
+  magicLinks     MagicLinkToken[]
+}
+
+model ChecklistTemplate {
+  id             String   @id @default(cuid())
+  organizationId String?
+  name           String
+  description    String?
+  projectType    String?
+  isDefault      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  organization Organization?          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  items        ChecklistTemplateItem[]
+}
+
+model ChecklistTemplateItem {
+  id          String   @id @default(cuid())
+  templateId  String
+  label       String
+  description String?
+  category    String   @default("CUSTOM")
+  isRequired  Boolean  @default(true)
+  sortOrder   Int      @default(0)
+
+  template ChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+}
+
+model ProjectChecklistItem {
+  id          String    @id @default(cuid())
+  projectId   String
+  label       String
+  description String?
+  category    String    @default("CUSTOM")
+  isRequired  Boolean   @default(true)
+  isCompleted Boolean   @default(false)
+  completedAt DateTime?
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  documents Document[]
+}
+
+model Document {
+  id              String   @id @default(cuid())
+  projectId       String
+  checklistItemId String?
+  fileName        String
+  mimeType        String
+  size            Int
+  storageKey      String
+  uploadedByEmail String?
+  createdAt       DateTime @default(now())
+
+  project       Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  checklistItem ProjectChecklistItem? @relation(fields: [checklistItemId], references: [id])
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String?
+  type      String
+  message   String
+  metadata  String?
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model MagicLinkToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  projectId String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id                   String    @id @default(cuid())
+  organizationId       String    @unique
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  plan                 String    @default("STARTER")
+  status               String    @default("TRIALING")
+  trialEndsAt          DateTime?
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
