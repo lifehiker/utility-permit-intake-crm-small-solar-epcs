@@ -19,6 +19,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing file or projectId" }, { status: 400 })
     }
 
+    const membership = await prisma.membership.findFirst({
+      where: { userId: session.user.id },
+    })
+    if (!membership) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
+    const project = await prisma.project.findUnique({
+      where: { id: projectId, organizationId: membership.organizationId },
+      select: { id: true },
+    })
+    if (!project) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 })
+    }
+
     const buffer = Buffer.from(await file.arrayBuffer())
     const storageKey = await saveFile(buffer, file.name)
 

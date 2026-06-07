@@ -39,5 +39,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: {
     signIn: "/login",
   },
-  secret: process.env.AUTH_SECRET || "development-secret-key-change-in-production",
+  secret: process.env.AUTH_SECRET ?? "development-secret-key-do-not-use-in-production",
 })

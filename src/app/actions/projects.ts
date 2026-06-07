@@ -18,6 +18,11 @@ export async function createProject(data: {
   const session = await auth()
   if (!session?.user?.id) throw new Error("Unauthorized")
 
+  const membership = await prisma.membership.findUnique({
+    where: { userId_organizationId: { userId: session.user.id, organizationId: data.orgId } },
+  })
+  if (!membership) throw new Error("Forbidden")
+
   await checkProjectLimit(data.orgId)
 
   const customer = await prisma.customer.create({
@@ -76,8 +81,11 @@ export async function updateProjectStage(projectId: string, stage: string) {
   const session = await auth()
   if (!session?.user?.id) throw new Error("Unauthorized")
 
+  const membership = await prisma.membership.findFirst({ where: { userId: session.user.id } })
+  if (!membership) throw new Error("Forbidden")
+
   const project = await prisma.project.update({
-    where: { id: projectId },
+    where: { id: projectId, organizationId: membership.organizationId },
     data: { stage },
   })
 
@@ -181,6 +189,9 @@ export async function deleteProject(projectId: string) {
   const session = await auth()
   if (!session?.user?.id) throw new Error("Unauthorized")
 
-  await prisma.project.delete({ where: { id: projectId } })
+  const membership = await prisma.membership.findFirst({ where: { userId: session.user.id } })
+  if (!membership) throw new Error("Forbidden")
+
+  await prisma.project.delete({ where: { id: projectId, organizationId: membership.organizationId } })
   revalidatePath("/projects")
 }

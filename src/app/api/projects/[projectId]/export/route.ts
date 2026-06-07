@@ -13,9 +13,16 @@ export async function GET(
 
   const { projectId } = await params
 
+  const membership = await prisma.membership.findFirst({
+    where: { userId: session.user.id },
+  })
+  if (!membership) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
   try {
     const project = await prisma.project.findUnique({
-      where: { id: projectId },
+      where: { id: projectId, organizationId: membership.organizationId },
       include: {
         customer: true,
         checklistItems: {
