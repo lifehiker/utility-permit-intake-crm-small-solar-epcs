@@ -122,6 +122,7 @@ export default function SettingsPage() {
     return (
       <div className="flex items-center justify-center py-16">
         <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
+        <span className="ml-2 text-gray-500">Loading settings...</span>
       </div>
     )
   }
