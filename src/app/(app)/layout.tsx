@@ -18,7 +18,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      <AppSidebar orgName={membership?.organization.name} />
+      <div className="hidden md:block"><AppSidebar orgName={membership?.organization.name} /></div>
       <div className="flex-1 flex flex-col min-w-0">
         <AppHeader
           title="SolarIntake"
