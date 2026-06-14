@@ -118,19 +118,6 @@ export default function SettingsPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
-        <span className="ml-2 text-gray-500">Loading settings...</span>
-      </div>
-    )
-  }
-
-  if (!org) {
-    return <div className="text-gray-500">Organization not found</div>
-  }
-
   const planLabels: Record<string, string> = {
     STARTER: "Starter — $149/mo",
     PRO: "Pro — $299/mo",
@@ -140,6 +127,15 @@ export default function SettingsPage() {
   return (
     <div className="max-w-3xl space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
+          <span className="ml-2 text-gray-500">Loading settings...</span>
+        </div>
+      ) : !org ? (
+        <div className="text-gray-500">Organization not found</div>
+      ) : (<>
 
       <Tabs defaultValue="organization">
         <TabsList>
@@ -344,6 +340,7 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      </>)}
     </div>
   )
 }
